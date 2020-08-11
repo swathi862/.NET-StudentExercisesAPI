@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using StudentExercisesAPI.Models;
@@ -39,7 +40,7 @@ namespace StudentExercisesAPI.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "SELECT Cohort.Id AS CohortID, Cohort.Name, Student.Id AS StudentID, Student.FirstName AS StudentFirstName, Student.LastName AS StudentLastName, Student.SlackHandle AS StudentSlack, Student.CohortId AS StudentCohort, Instructor.Id AS InstructorID, Instructor.FirstName AS InstructorFirstName, Instructor.LastName AS InstructorLastName, Instructor.SlackHandle AS InstructorSlack, Instructor.CohortId AS InstructorCohort FROM Student LEFT JOIN Cohort ON Student.CohortId = Cohort.Id LEFT JOIN Instructor ON Instructor.CohortId = Cohort.Id";
+                    cmd.CommandText = "SELECT Cohort.Id AS CohortID, Cohort.Name, Student.Id AS StudentID, Student.FirstName AS StudentFirstName, Student.LastName AS StudentLastName, Student.SlackHandle AS StudentSlack, Student.CohortId AS StudentCohort, Instructor.Id AS InstructorID, Instructor.FirstName AS InstructorFirstName, Instructor.LastName AS InstructorLastName, Instructor.SlackHandle AS InstructorSlack, Instructor.CohortId AS InstructorCohort FROM Student JOIN Cohort ON Student.CohortId = Cohort.Id JOIN Instructor ON Instructor.CohortId = Cohort.Id";
                     SqlDataReader reader = cmd.ExecuteReader();
 
                     List<Cohort> cohorts = new List<Cohort>();
@@ -51,50 +52,6 @@ namespace StudentExercisesAPI.Controllers
                             Id = reader.GetInt32(reader.GetOrdinal("CohortID")),
                             Name = reader.GetString(reader.GetOrdinal("Name"))
                         };
-
-                        //cohorts.Add(cohort);
-
-                        //Student student = new Student
-                        //{
-                        //    Id = reader.GetInt32(reader.GetOrdinal("StudentID")),
-                        //    FirstName = reader.GetString(reader.GetOrdinal("StudentFirstName")),
-                        //    LastName = reader.GetString(reader.GetOrdinal("StudentLastName")),
-                        //    SlackHandle = reader.GetString(reader.GetOrdinal("StudentSlack")),
-                        //    CohortId = reader.GetInt32(reader.GetOrdinal("StudentCohort"))
-                        //};
-
-                        //if (cohort.listOfStudents.Any(stud => stud.Id == student.Id) == false)
-                        //{
-                        //    cohort.listOfStudents.Add(student);
-                        //}
-                        //else
-                        //{
-                        //    if (!reader.IsDBNull(reader.GetOrdinal("StudentID")))
-                        //    {
-                        //        cohorts.FirstOrDefault(c => c.Id == cohort.Id).listOfStudents.Add(student);
-                        //    }
-                        //}
-
-                        //Instructor instructor = new Instructor
-                        //{
-                        //    Id = reader.GetInt32(reader.GetOrdinal("InstructorID")),
-                        //    FirstName = reader.GetString(reader.GetOrdinal("InstructorFirstName")),
-                        //    LastName = reader.GetString(reader.GetOrdinal("InstructorLastName")),
-                        //    SlackHandle = reader.GetString(reader.GetOrdinal("InstructorSlack")),
-                        //    CohortId = reader.GetInt32(reader.GetOrdinal("InstructorCohort"))
-                        //};
-
-                        //if (cohort.listOfInstructors.Any(i => i.Id == instructor.Id) == false)
-                        //{
-                        //    cohort.listOfInstructors.Add(instructor);
-                        //}
-                        //else
-                        //{
-                        //    if (!reader.IsDBNull(reader.GetOrdinal("InstructorID")))
-                        //    {
-                        //        cohorts.FirstOrDefault(c => c.Id == cohort.Id).listOfInstructors.Add(instructor);
-                        //    }
-                        //}
 
 
                         if (cohorts.Any(c => c.Id == cohort.Id) == false)
@@ -165,44 +122,6 @@ namespace StudentExercisesAPI.Controllers
 
                         }
 
-                        //if (cohorts.Any(c => c.Id == cohort.Id) == false)
-                        //{
-                        //    if (!reader.IsDBNull(reader.GetOrdinal("InstructorID")))
-                        //    {
-                        //        Instructor instructor = new Instructor
-                        //        {
-                        //            Id = reader.GetInt32(reader.GetOrdinal("InstructorID")),
-                        //            FirstName = reader.GetString(reader.GetOrdinal("InstructorFirstName")),
-                        //            LastName = reader.GetString(reader.GetOrdinal("InstructorLastName")),
-                        //            SlackHandle = reader.GetString(reader.GetOrdinal("InstructorSlack")),
-                        //            CohortId = reader.GetInt32(reader.GetOrdinal("InstructorCohort"))
-                        //        };
-
-                        //        cohort.listOfInstructors.Add(instructor);
-
-                        //    }
-
-                        //    cohorts.Add(cohort);
-                        //}
-                        //else
-                        //{
-                        //    if (!reader.IsDBNull(reader.GetOrdinal("InstructorID")))
-                        //    {
-                        //        Instructor instructor = new Instructor
-                        //        {
-                        //            Id = reader.GetInt32(reader.GetOrdinal("InstructorID")),
-                        //            FirstName = reader.GetString(reader.GetOrdinal("InstructorFirstName")),
-                        //            LastName = reader.GetString(reader.GetOrdinal("InstructorLastName")),
-                        //            SlackHandle = reader.GetString(reader.GetOrdinal("InstructorSlack")),
-                        //            CohortId = reader.GetInt32(reader.GetOrdinal("InstructorCohort"))
-                        //        };
-
-                        //        cohorts.FirstOrDefault(c => c.Id == cohort.Id).listOfInstructors.Add(instructor);
-
-                        //    }
-
-                        //}
-
                     }
 
                     reader.Close();
@@ -214,28 +133,186 @@ namespace StudentExercisesAPI.Controllers
         }
 
         // GET api/<CohortController>/5
-        [HttpGet("{id}")]
-        public string Get(int id)
+        [HttpGet("{id}", Name ="GetCohort")]
+        public async Task<IActionResult> Get([FromRoute] int id)
         {
-            return "value";
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"
+                        SELECT Cohort.Id AS CohortID, Cohort.Name, Student.Id AS StudentID, Student.FirstName AS StudentFirstName, Student.LastName AS StudentLastName, Student.SlackHandle AS StudentSlack, Student.CohortId AS StudentCohort, Instructor.Id AS InstructorID, Instructor.FirstName AS InstructorFirstName, Instructor.LastName AS InstructorLastName, Instructor.SlackHandle AS InstructorSlack, Instructor.CohortId AS InstructorCohort FROM Student LEFT JOIN Cohort ON Student.CohortId = Cohort.Id LEFT JOIN Instructor ON Instructor.CohortId = Cohort.Id
+                        WHERE Cohort.Id = @id";
+                    cmd.Parameters.Add(new SqlParameter("@id", id));
+                    SqlDataReader reader = cmd.ExecuteReader();
+
+                    Cohort cohort = null;
+
+                    while (reader.Read())
+                    {
+                        if (cohort == null)
+                        {
+                            cohort = new Cohort
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("CohortId")),
+                                Name = reader.GetString(reader.GetOrdinal("Name")),
+                            };
+                        }
+                        else
+                        {
+                            if (cohort.listOfStudents.Any(stud => stud.Id == reader.GetInt32(reader.GetOrdinal("StudentID"))) == false)
+                            {
+                                Student student = new Student
+                                {
+                                    Id = reader.GetInt32(reader.GetOrdinal("StudentID")),
+                                    FirstName = reader.GetString(reader.GetOrdinal("StudentFirstName")),
+                                    LastName = reader.GetString(reader.GetOrdinal("StudentLastName")),
+                                    SlackHandle = reader.GetString(reader.GetOrdinal("StudentSlack")),
+                                    CohortId = reader.GetInt32(reader.GetOrdinal("StudentCohort"))
+                                };
+
+                                cohort.listOfStudents.Add(student);
+
+                            }
+
+                            if (cohort.listOfInstructors.Any(i => i.Id == reader.GetInt32(reader.GetOrdinal("InstructorID"))) == false)
+                            {
+                                Instructor instructor = new Instructor
+                                {
+                                    Id = reader.GetInt32(reader.GetOrdinal("InstructorID")),
+                                    FirstName = reader.GetString(reader.GetOrdinal("InstructorFirstName")),
+                                    LastName = reader.GetString(reader.GetOrdinal("InstructorLastName")),
+                                    SlackHandle = reader.GetString(reader.GetOrdinal("InstructorSlack")),
+                                    CohortId = reader.GetInt32(reader.GetOrdinal("InstructorCohort"))
+                                };
+
+                                cohort.listOfInstructors.Add(instructor);
+
+                            }
+                        }
+                    }
+                    reader.Close();
+
+                    return Ok(cohort);
+                }
+            }
         }
 
         // POST api/<CohortController>
         [HttpPost]
-        public void Post([FromBody] string value)
+        public async Task<IActionResult> Post([FromBody] Cohort cohort)
         {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"INSERT INTO Cohort(Name)
+                                        OUTPUT INSERTED.Id
+                                        VALUES (@name)";
+                    cmd.Parameters.Add(new SqlParameter("@name", cohort.Name));
+
+
+                    int newId = (int)cmd.ExecuteScalar();
+                    cohort.Id = newId;
+                    return CreatedAtRoute("GetCohort", new { id = newId }, cohort);
+                }
+            }
         }
 
         // PUT api/<CohortController>/5
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        public async Task<IActionResult> Put([FromRoute] int id, [FromBody] Cohort cohort)
         {
+            try
+            {
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"UPDATE Cohort
+                                            SET Name = @name,
+
+                                            WHERE Id = @id";
+                        cmd.Parameters.Add(new SqlParameter("@name", cohort.Name));
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
+
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        if (rowsAffected > 0)
+                        {
+                            return new StatusCodeResult(StatusCodes.Status204NoContent);
+                        }
+                        throw new Exception("No rows affected");
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                if (!CohortExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
         }
 
         // DELETE api/<CohortController>/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public async Task<IActionResult> Delete([FromRoute] int id)
         {
+            try
+            {
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"DELETE FROM Cohort WHERE Id = @id";
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
+
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        if (rowsAffected > 0)
+                        {
+                            return new StatusCodeResult(StatusCodes.Status204NoContent);
+                        }
+                        throw new Exception("No rows affected");
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                if (!CohortExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+        }
+
+        private bool CohortExists(int id)
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"
+                        Cohort.Id AS CohortID, Cohort.Name, Student.Id AS StudentID, Student.FirstName AS StudentFirstName, Student.LastName AS StudentLastName, Student.SlackHandle AS StudentSlack, Student.CohortId AS StudentCohort, Instructor.Id AS InstructorID, Instructor.FirstName AS InstructorFirstName, Instructor.LastName AS InstructorLastName, Instructor.SlackHandle AS InstructorSlack, Instructor.CohortId AS InstructorCohort FROM Student LEFT JOIN Cohort ON Student.CohortId = Cohort.Id LEFT JOIN Instructor ON Instructor.CohortId = Cohort.Id
+                          WHERE Cohort.Id = @id";
+                    cmd.Parameters.Add(new SqlParameter("@id", id));
+
+                    SqlDataReader reader = cmd.ExecuteReader();
+                    return reader.Read();
+                }
+            }
         }
     }
 }
