@@ -217,7 +217,7 @@ namespace StudentExercisesAPI.Controllers
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = @"
-                        Instructor.Id, FirstName, LastName, SlackHandle, CohortId, Cohort.Name FROM Student LEFT JOIN Cohort ON Instructor.CohortId = Cohort.Id
+                        SELECT Instructor.Id, FirstName, LastName, SlackHandle, CohortId, Cohort.Name FROM Student LEFT JOIN Cohort ON Instructor.CohortId = Cohort.Id
                         WHERE Instructor.Id = @id";
                     cmd.Parameters.Add(new SqlParameter("@id", id));
 

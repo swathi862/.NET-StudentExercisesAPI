@@ -40,7 +40,7 @@ namespace StudentExercisesAPI.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "SELECT Cohort.Id AS CohortID, Cohort.Name, Student.Id AS StudentID, Student.FirstName AS StudentFirstName, Student.LastName AS StudentLastName, Student.SlackHandle AS StudentSlack, Student.CohortId AS StudentCohort, Instructor.Id AS InstructorID, Instructor.FirstName AS InstructorFirstName, Instructor.LastName AS InstructorLastName, Instructor.SlackHandle AS InstructorSlack, Instructor.CohortId AS InstructorCohort FROM Student JOIN Cohort ON Student.CohortId = Cohort.Id JOIN Instructor ON Instructor.CohortId = Cohort.Id";
+                    cmd.CommandText = "SELECT Cohort.Id AS CohortID, Cohort.Name, Student.Id AS StudentID, Student.FirstName AS StudentFirstName, Student.LastName AS StudentLastName, Student.SlackHandle AS StudentSlack, Student.CohortId AS StudentCohort, Instructor.Id AS InstructorID, Instructor.FirstName AS InstructorFirstName, Instructor.LastName AS InstructorLastName, Instructor.SlackHandle AS InstructorSlack, Instructor.CohortId AS InstructorCohort FROM Cohort LEFT JOIN Student ON Student.CohortId = Cohort.Id LEFT JOIN Instructor ON Instructor.CohortId = Cohort.Id";
                     SqlDataReader reader = cmd.ExecuteReader();
 
                     List<Cohort> cohorts = new List<Cohort>();
@@ -56,7 +56,7 @@ namespace StudentExercisesAPI.Controllers
 
                         if (cohorts.Any(c => c.Id == cohort.Id) == false)
                         {
-                            if (cohort.listOfStudents.Any(stud => stud.Id == reader.GetInt32(reader.GetOrdinal("StudentID"))) == false)
+                            if (cohort.listOfStudents.Any(stud => stud.Id == reader.GetInt32(reader.GetOrdinal("StudentID"))) == false && !reader.IsDBNull(reader.GetOrdinal("StudentID")))
                             {
                                 Student student = new Student
                                 {
@@ -71,7 +71,7 @@ namespace StudentExercisesAPI.Controllers
 
                             }
 
-                            if (cohort.listOfInstructors.Any(i => i.Id == reader.GetInt32(reader.GetOrdinal("InstructorID"))) == false)
+                            if (cohort.listOfInstructors.Any(i => i.Id == reader.GetInt32(reader.GetOrdinal("InstructorID"))) == false && !reader.IsDBNull(reader.GetOrdinal("InstructorID")))
                             {
                                 Instructor instructor = new Instructor
                                 {
@@ -90,7 +90,7 @@ namespace StudentExercisesAPI.Controllers
                         }
                         else
                         {
-                            if (cohorts.FirstOrDefault(c => c.Id == cohort.Id).listOfStudents.Any(stud => stud.Id == reader.GetInt32(reader.GetOrdinal("StudentID"))) == false)
+                            if (cohorts.FirstOrDefault(c => c.Id == cohort.Id).listOfStudents.Any(stud => stud.Id == reader.GetInt32(reader.GetOrdinal("StudentID"))) == false && !reader.IsDBNull(reader.GetOrdinal("StudentID")))
                             {
                                 Student student = new Student
                                 {
@@ -105,7 +105,7 @@ namespace StudentExercisesAPI.Controllers
 
                             }
 
-                            if (cohorts.FirstOrDefault(c => c.Id == cohort.Id).listOfInstructors.Any(i => i.Id == reader.GetInt32(reader.GetOrdinal("InstructorID"))) == false)
+                            if (cohorts.FirstOrDefault(c => c.Id == cohort.Id).listOfInstructors.Any(i => i.Id == reader.GetInt32(reader.GetOrdinal("InstructorID"))) == false && !reader.IsDBNull(reader.GetOrdinal("InstructorID")))
                             {
                                 Instructor instructor = new Instructor
                                 {
@@ -142,7 +142,7 @@ namespace StudentExercisesAPI.Controllers
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = @"
-                        SELECT Cohort.Id AS CohortID, Cohort.Name, Student.Id AS StudentID, Student.FirstName AS StudentFirstName, Student.LastName AS StudentLastName, Student.SlackHandle AS StudentSlack, Student.CohortId AS StudentCohort, Instructor.Id AS InstructorID, Instructor.FirstName AS InstructorFirstName, Instructor.LastName AS InstructorLastName, Instructor.SlackHandle AS InstructorSlack, Instructor.CohortId AS InstructorCohort FROM Student LEFT JOIN Cohort ON Student.CohortId = Cohort.Id LEFT JOIN Instructor ON Instructor.CohortId = Cohort.Id
+                        SELECT Cohort.Id AS CohortID, Cohort.Name, Student.Id AS StudentID, Student.FirstName AS StudentFirstName, Student.LastName AS StudentLastName, Student.SlackHandle AS StudentSlack, Student.CohortId AS StudentCohort, Instructor.Id AS InstructorID, Instructor.FirstName AS InstructorFirstName, Instructor.LastName AS InstructorLastName, Instructor.SlackHandle AS InstructorSlack, Instructor.CohortId AS InstructorCohort FROM Cohort LEFT JOIN Student ON Student.CohortId = Cohort.Id LEFT JOIN Instructor ON Instructor.CohortId = Cohort.Id
                         WHERE Cohort.Id = @id";
                     cmd.Parameters.Add(new SqlParameter("@id", id));
                     SqlDataReader reader = cmd.ExecuteReader();
@@ -161,7 +161,7 @@ namespace StudentExercisesAPI.Controllers
                         }
                         else
                         {
-                            if (cohort.listOfStudents.Any(stud => stud.Id == reader.GetInt32(reader.GetOrdinal("StudentID"))) == false)
+                            if (cohort.listOfStudents.Any(stud => stud.Id == reader.GetInt32(reader.GetOrdinal("StudentID"))) == false && !reader.IsDBNull(reader.GetOrdinal("StudentID")))
                             {
                                 Student student = new Student
                                 {
@@ -176,7 +176,7 @@ namespace StudentExercisesAPI.Controllers
 
                             }
 
-                            if (cohort.listOfInstructors.Any(i => i.Id == reader.GetInt32(reader.GetOrdinal("InstructorID"))) == false)
+                            if (cohort.listOfInstructors.Any(i => i.Id == reader.GetInt32(reader.GetOrdinal("InstructorID"))) == false && !reader.IsDBNull(reader.GetOrdinal("InstructorID")))
                             {
                                 Instructor instructor = new Instructor
                                 {
@@ -233,7 +233,7 @@ namespace StudentExercisesAPI.Controllers
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
                         cmd.CommandText = @"UPDATE Cohort
-                                            SET Name = @name,
+                                            SET Name = @name
 
                                             WHERE Id = @id";
                         cmd.Parameters.Add(new SqlParameter("@name", cohort.Name));
@@ -248,7 +248,7 @@ namespace StudentExercisesAPI.Controllers
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 if (!CohortExists(id))
                 {
@@ -305,7 +305,7 @@ namespace StudentExercisesAPI.Controllers
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = @"
-                        Cohort.Id AS CohortID, Cohort.Name, Student.Id AS StudentID, Student.FirstName AS StudentFirstName, Student.LastName AS StudentLastName, Student.SlackHandle AS StudentSlack, Student.CohortId AS StudentCohort, Instructor.Id AS InstructorID, Instructor.FirstName AS InstructorFirstName, Instructor.LastName AS InstructorLastName, Instructor.SlackHandle AS InstructorSlack, Instructor.CohortId AS InstructorCohort FROM Student LEFT JOIN Cohort ON Student.CohortId = Cohort.Id LEFT JOIN Instructor ON Instructor.CohortId = Cohort.Id
+                        SELECT Cohort.Id AS CohortID, Cohort.Name, Student.Id AS StudentID, Student.FirstName AS StudentFirstName, Student.LastName AS StudentLastName, Student.SlackHandle AS StudentSlack, Student.CohortId AS StudentCohort, Instructor.Id AS InstructorID, Instructor.FirstName AS InstructorFirstName, Instructor.LastName AS InstructorLastName, Instructor.SlackHandle AS InstructorSlack, Instructor.CohortId AS InstructorCohort FROM Cohort LEFT JOIN Student ON Student.CohortId = Cohort.Id LEFT JOIN Instructor ON Instructor.CohortId = Cohort.Id
                           WHERE Cohort.Id = @id";
                     cmd.Parameters.Add(new SqlParameter("@id", id));
 
