@@ -33,14 +33,27 @@ namespace StudentExercisesAPI.Controllers
 
         // GET: api/<StudentsController>
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get(string include, string q)
         {
             using (SqlConnection conn = Connection)
             {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "SELECT Student.Id, FirstName, LastName, SlackHandle, CohortId, Cohort.Name FROM Student LEFT JOIN Cohort ON Student.CohortId = Cohort.Id";
+
+                    string query = "SELECT Student.Id, FirstName, LastName, SlackHandle, CohortId, Cohort.Name AS CohortName FROM Student LEFT JOIN Cohort ON Student.CohortId = Cohort.Id ";
+
+                    if(include == "exercise")
+                    {
+                        query = "SELECT Student.Id, FirstName, LastName, SlackHandle, CohortId, Cohort.Name AS CohortName, Exercise.Id AS ExerciseID, Exercise.Name AS ExerciseName, Exercise.Language FROM Student LEFT JOIN Cohort ON Student.CohortId = Cohort.Id LEFT JOIN AssignedExercise ON Student.Id = AssignedExercise.StudentId LEFT JOIN Exercise ON Exercise.Id = AssignedExercise.ExerciseId ";
+                    }
+
+                    if(q != " ")
+                    {
+                        query += $"WHERE FirstName LIKE '%{q}%' OR LastName LIKE '%{q}%' OR SlackHandle LIKE '%{q}%'";
+                    }
+
+                    cmd.CommandText = query;
                     SqlDataReader reader = cmd.ExecuteReader();
                     List<Student> students = new List<Student>();
 
@@ -53,10 +66,48 @@ namespace StudentExercisesAPI.Controllers
                             LastName = reader.GetString(reader.GetOrdinal("LastName")),
                             SlackHandle = reader.GetString(reader.GetOrdinal("SlackHandle")),
                             CohortId = reader.GetInt32(reader.GetOrdinal("CohortId")),
-                            Cohort = new Cohort { Id = reader.GetInt32(reader.GetOrdinal("CohortId")), Name = reader.GetString(reader.GetOrdinal("Name")), }
+                            Cohort = new Cohort { Id = reader.GetInt32(reader.GetOrdinal("CohortId")), Name = reader.GetString(reader.GetOrdinal("CohortName")), }
                         };
 
-                        students.Add(student);
+                        if (students.Any(stud => stud.Id == student.Id) == false)
+                        {
+                            if (include == "exercise")
+                            {
+                                if (!reader.IsDBNull(reader.GetOrdinal("ExerciseID")))
+                                {
+                                    Exercise exercise = new Exercise
+                                    {
+                                        Id = reader.GetInt32(reader.GetOrdinal("ExerciseID")),
+                                        Name = reader.GetString(reader.GetOrdinal("ExerciseName")),
+                                        Language = reader.GetString(reader.GetOrdinal("Language"))
+                                    };
+
+                                    student.assignedExercises.Add(exercise);
+                                }
+                            }
+
+                            students.Add(student);
+                        }
+
+                        else
+                        {
+                            if (include == "exercise")
+                            {
+                                if(!reader.IsDBNull(reader.GetOrdinal("ExerciseID")))
+                                {
+                                    Exercise exercise = new Exercise
+                                    {
+                                        Id = reader.GetInt32(reader.GetOrdinal("ExerciseID")),
+                                        Name = reader.GetString(reader.GetOrdinal("ExerciseName")),
+                                        Language = reader.GetString(reader.GetOrdinal("Language"))
+                                    };
+
+                                    students.FirstOrDefault(s => s.Id == student.Id).assignedExercises.Add(exercise);
+                                }
+                            }
+
+                        }
+
                     }
                     reader.Close();
 

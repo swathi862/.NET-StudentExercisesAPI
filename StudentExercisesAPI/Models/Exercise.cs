@@ -14,6 +14,6 @@ namespace StudentExercisesAPI.Models
         [Required]
         public string Language { get; set; }
 
-        //public List<Student> assignedStudents { get; set; } = new List<Student>();
+        public List<Student> assignedStudents { get; set; } = new List<Student>();
     }
 }

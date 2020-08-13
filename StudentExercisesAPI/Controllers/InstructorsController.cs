@@ -33,14 +33,21 @@ namespace StudentExercisesAPI.Controllers
 
         // GET: api/<InstructorsController>
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get(string q)
         {
             using (SqlConnection conn = Connection)
             {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "SELECT Instructor.Id, FirstName, LastName, SlackHandle, CohortId, Cohort.Name FROM Instructor LEFT JOIN Cohort ON Instructor.CohortId = Cohort.Id";
+                    string query = "SELECT Instructor.Id, FirstName, LastName, SlackHandle, CohortId, Cohort.Name FROM Instructor LEFT JOIN Cohort ON Instructor.CohortId = Cohort.Id ";
+
+                    if(q != " ")
+                    {
+                        query += $"WHERE FirstName LIKE '%{q}%' OR LastName LIKE '%{q}%' OR SlackHandle LIKE '%{q}%'";
+                    }
+
+                    cmd.CommandText = query;
                     SqlDataReader reader = cmd.ExecuteReader();
                     List<Instructor> instructors = new List<Instructor>();
 
